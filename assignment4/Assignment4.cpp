@@ -1,8 +1,14 @@
 #include "assignment4/Assignment4.h"
+#include "common/Scene/Light/DirectionalLight.h"
+#include "common/Scene/Light/HemisphereLight.h"
 #include "common/core.h" // <-- haha.
 #include "common/Utility/Mesh/Simple/PrimitiveCreator.h"
 #include "common/Utility/Mesh/Loading/MeshLoader.h"
 #include "common/Utility/Texture/TextureLoader.h"
+#include "common/Rendering/Shaders/EpicShader.h"
+#include "common/Scene/Light/EpicLightProperties.h"
+#include <math.h>
+
 
 #include <cmath>
 
@@ -53,6 +59,12 @@ void Assignment4::HandleInput(SDL_Keysym key, Uint32 state, Uint8 repeat, double
     }
 
     switch (key.sym) {
+	case SDLK_EQUALS:
+		sceneObject->AddScale(0.1f);
+		break;
+	case SDLK_MINUS:
+		sceneObject->AddScale(-0.1f);
+		break;
     case SDLK_1:
         if (!repeat && state == SDL_KEYDOWN) {
             SetupExample1();
@@ -104,31 +116,49 @@ void Assignment4::HandleWindowResize(float x, float y)
 void Assignment4::SetupExample1()
 {
     scene->ClearScene();
-#ifndef DISABLE_OPENGL_SUBROUTINES
+
     std::unordered_map<GLenum, std::string> shaderSpec = {
-        { GL_VERTEX_SHADER, "brdf/blinnphong/frag/blinnphong.vert" },
-        { GL_FRAGMENT_SHADER, "brdf/blinnphong/frag/blinnphong.frag" }
+        { GL_VERTEX_SHADER, "brdf/blinnphong/frag/noSubroutine/epic.vert" },
+        { GL_FRAGMENT_SHADER, "brdf/blinnphong/frag/noSubroutine/epic.frag"}
     };
-#else
-    std::unordered_map<GLenum, std::string> shaderSpec = {
-        { GL_VERTEX_SHADER, "brdf/blinnphong/frag/noSubroutine/blinnphong.vert" },
-        { GL_FRAGMENT_SHADER, "brdf/blinnphong/frag/noSubroutine/blinnphong.frag"}
-    };
-#endif
-    std::shared_ptr<BlinnPhongShader> shader = std::make_shared<BlinnPhongShader>(shaderSpec, GL_FRAGMENT_SHADER);
+		
+    std::shared_ptr<EpicShader> shader = std::make_shared<EpicShader>(shaderSpec, GL_FRAGMENT_SHADER);
     shader->SetDiffuse(glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
     shader->SetSpecular(glm::vec4(1.f, 1.f, 1.f, 1.f), 40.f);
 
-    std::shared_ptr<BlinnPhongShader> groundShader = std::make_shared<BlinnPhongShader>(shaderSpec, GL_FRAGMENT_SHADER);
+    std::shared_ptr<EpicShader> groundShader = std::make_shared<EpicShader>(shaderSpec, GL_FRAGMENT_SHADER);
     shader->SetDiffuse(glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
 
-    std::unique_ptr<LightProperties> lightProperties = make_unique<LightProperties>();
-    lightProperties->diffuseColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
-    lightProperties->specularColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	// Point Light
+	std::unique_ptr<EpicLightProperties> EpiclightProperties = make_unique<EpicLightProperties>();
+	EpiclightProperties->diffuseColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties->specularColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties->LightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
 
-    pointLight = std::make_shared<Light>(std::move(lightProperties));
-    pointLight->SetPosition(glm::vec3(10.f, 10.f, 10.f));
+    pointLight = std::make_shared<Light>(std::move(EpiclightProperties));
+    pointLight->SetPosition(glm::vec3(1.f, 1.f, 10.f));
     scene->AddLight(pointLight);
+
+	// Directional Light
+	std::unique_ptr<EpicLightProperties> EpiclightProperties2 = make_unique<EpicLightProperties>();
+	EpiclightProperties2->diffuseColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties2->specularColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties2->LightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+
+	directionalLight = std::make_shared<DirectionalLight>(std::move(EpiclightProperties2));
+	directionalLight->SetPosition(glm::vec3(1.f, 2.f, 1.f));
+	scene->AddLight(directionalLight);
+
+	// Hemisphere Light
+	std::unique_ptr<EpicLightProperties> EpiclightProperties3 = make_unique<EpicLightProperties>();
+	EpiclightProperties3->diffuseColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties3->specularColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+	EpiclightProperties3->LightColor = glm::vec4(1.f, 1.f, 1.f, 1.f);
+
+	hemisphereLight = std::make_shared<HemisphereLight>(std::move(EpiclightProperties3));
+	hemisphereLight->SetPosition(glm::vec3(1.f, 2.f, 1.f));
+	scene->AddLight(hemisphereLight);
+
 
     GenericSetupExample(shader, groundShader);
 
@@ -136,6 +166,20 @@ void Assignment4::SetupExample1()
 
 void Assignment4::GenericSetupExample(std::shared_ptr<ShaderProgram> shader, std::shared_ptr<ShaderProgram> groundShader)
 {
+
+	// Add scene Object
+	std::vector<std::shared_ptr<RenderingObject>> meshTemplate = MeshLoader::LoadMesh(shader, "maya-house.obj");
+	if (meshTemplate.empty()) {
+		std::cerr << "ERROR: Failed to load the model. Check your paths." << std::endl;
+		return;
+	}
+
+	sceneObject = std::make_shared<SceneObject>(meshTemplate);
+	sceneObject->MultScale(5);
+	scene->AddSceneObject(sceneObject);
+
+	// Add scene object 
+
     std::shared_ptr<RenderingObject> sphereTemplate = PrimitiveCreator::CreateIcoSphere(shader, 5.f, 4);
 
     // Give a R/G/B color to each vertex to visualize the sphere.

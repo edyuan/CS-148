@@ -27,6 +27,11 @@ private:
 
     virtual void SetupCamera();
 
+	GLuint programobject;
+	GLuint vao;
+	GLuint vertexbuffer;
+	float time;
+
     std::shared_ptr<class SceneObject> sceneObject;
 
     std::shared_ptr<class Light> pointLight;

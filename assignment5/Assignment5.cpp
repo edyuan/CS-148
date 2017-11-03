@@ -10,7 +10,7 @@ Assignment5::Assignment5(std::shared_ptr<class Scene> inputScene, std::shared_pt
 }
 
 std::unique_ptr<Application> Assignment5::CreateApplication(std::shared_ptr<class Scene> scene, std::shared_ptr<class Camera> camera)
-{
+{	
     return make_unique<Assignment5>(std::move(scene), std::move(camera));
 }
 
@@ -180,19 +180,64 @@ void Assignment5::SetupExample2()
     pointLight->SetPosition(glm::vec3(10.f, 10.f, 10.f));
     scene->AddLight(pointLight);
 
+	// Add object 1
+
     std::vector<std::shared_ptr<aiMaterial>> loadedMaterials;
-    std::vector<std::shared_ptr<RenderingObject>> sphereTemplate = MeshLoader::LoadMesh(nullptr, "sphere.obj", &loadedMaterials);
+    std::vector<std::shared_ptr<RenderingObject>> sphereTemplate = MeshLoader::LoadMesh(nullptr, "PARAKEET.obj", &loadedMaterials);
     for (size_t i = 0; i < sphereTemplate.size(); ++i) {
         std::shared_ptr<BlinnPhongShader> shader = std::make_shared<BlinnPhongShader>(shaderSpec, GL_FRAGMENT_SHADER);
         shader->LoadMaterialFromAssimp(loadedMaterials[i]);
         sphereTemplate[i]->SetShader(std::move(shader));
 
-        sphereTemplate[i]->ComputeTangentSpace();
+        //sphereTemplate[i]->ComputeTangentSpace();
     }
 
     std::shared_ptr<class SceneObject> sceneObject = std::make_shared<SceneObject>(sphereTemplate);
     sceneObject->Rotate(glm::vec3(SceneObject::GetWorldRight()), PI / 4.f);
+	sceneObject->MultScale(10);
     scene->AddSceneObject(sceneObject);
+
+	// Add object 2
+
+	std::vector<std::shared_ptr<aiMaterial>> loadedMaterials2;
+	std::vector<std::shared_ptr<RenderingObject>> objecttemplate = MeshLoader::LoadMesh(nullptr, "moon.obj", &loadedMaterials2);
+	for (size_t i = 0; i < objecttemplate.size(); ++i) {
+		std::shared_ptr<BlinnPhongShader> shader2 = std::make_shared<BlinnPhongShader>(shaderSpec, GL_FRAGMENT_SHADER);
+		shader2->LoadMaterialFromAssimp(loadedMaterials2[i]);
+		objecttemplate[i]->SetShader(std::move(shader2));
+	}
+	std::shared_ptr<class SceneObject> sceneObject2 = std::make_shared<SceneObject>(objecttemplate);
+	sceneObject2->Translate(glm::vec3(-5., 5., -5.));
+	//sceneObject2->Rotate(glm::vec3(SceneObject::GetWorldRight()), PI / 4.f);
+	scene->AddSceneObject(sceneObject2);
+
+	// Add cube background
+	std::unordered_map<GLenum, std::string> cubeShaderSpec = {
+		{ GL_VERTEX_SHADER, "cubemap/cubemap.vert" },
+		{ GL_FRAGMENT_SHADER, "cubemap/cubemap.frag" }
+	};
+	/*std::shared_ptr<CubeMapTexture> skyboxTexture = TextureLoader::LoadCubeTexture("stonegods/sgod_bk.bmp",
+		"stonegods/sgod_lf.bmp",
+		"stonegods/sgod_rt.bmp",
+		"stonegods/sgod_up.bmp",
+		"stonegods/sgod_dn.bmp",
+		"stonegods/sgod_ft.bmp");*/
+	std::shared_ptr<CubeMapTexture> skyboxTexture = TextureLoader::LoadCubeTexture("stonegods/sgod_lf.bmp",
+		"stonegods/sgod_ft.bmp",
+		"stonegods/sgod_bk.bmp",
+		"stonegods/sgod_up.bmp",
+		"stonegods/sgod_dn.bmp",
+		"stonegods/sgod_rt.bmp");
+	std::shared_ptr<CubeMapShader> cubeShader = std::make_shared<CubeMapShader>(cubeShaderSpec, skyboxTexture);
+	std::vector<std::shared_ptr<RenderingObject>> cubeTemplate = MeshLoader::LoadMesh(cubeShader, "cube.obj");
+	for (size_t i = 0; i < cubeTemplate.size(); ++i) {
+		cubeTemplate[i]->ReverseVertexOrder();
+	}
+
+	std::shared_ptr<class SceneObject> cubeObject = std::make_shared<SceneObject>(cubeTemplate);
+	cubeObject->SetPosition(glm::vec3(0.f, 0.f, 2.f));
+	scene->AddSceneObject(cubeObject);
+
 }
 
 

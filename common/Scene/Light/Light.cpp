@@ -2,11 +2,11 @@
 #include "common/Scene/Light/LightProperties.h"
 #include "common/Rendering/Shaders/ShaderProgram.h"
 
-const std::string Light::LIGHT_UNIFORM_NAME = "pointLight";
 
 Light::Light(std::unique_ptr<LightProperties> inProperties, LightType type):
     properties(std::move(inProperties)), lightType(type), constantAttenuation(1.f), linearAttenuation(0.f), quadraticAttenuation(0.f)
 {
+	Light::LIGHT_UNIFORM_NAME = "pointLight";
 }
 
 Light::~Light()

@@ -118,30 +118,42 @@ void Assignment3::SetupExample1()
     };
 #endif
     std::shared_ptr<BlinnPhongShader> shader = std::make_shared<BlinnPhongShader>(shaderSpec, GL_FRAGMENT_SHADER);
-    shader->SetDiffuse(glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
+    shader->SetDiffuse(glm::vec4(0.8f, 0.0f, 0.8f, 1.f));
     shader->SetAmbient(glm::vec4(0.5f));
 
-    std::shared_ptr<RenderingObject> sphereTemplate = PrimitiveCreator::CreateIcoSphere(shader, 5.f, 4);
+	////Add sphere
 
-    // Give a R/G/B color to each vertex to visualize the sphere.
-    auto totalVertices = sphereTemplate->GetTotalVertices();
+ //   std::shared_ptr<RenderingObject> sphereTemplate = PrimitiveCreator::CreateIcoSphere(shader, 5.f, 4);
 
-    std::unique_ptr<RenderingObject::ColorArray> vertexColors = make_unique<RenderingObject::ColorArray>();
-    vertexColors->reserve(totalVertices);
+ //   // Give a R/G/B color to each vertex to visualize the sphere.
+ //   auto totalVertices = sphereTemplate->GetTotalVertices();
 
-    for (decltype(totalVertices) i = 0; i < totalVertices; ++i) {
-        vertexColors->emplace_back(0.5f, 0.5f, 0.5f, 1.f);
-    }
-    sphereTemplate->SetVertexColors(std::move(vertexColors));
+ //   std::unique_ptr<RenderingObject::ColorArray> vertexColors = make_unique<RenderingObject::ColorArray>();
+ //   vertexColors->reserve(totalVertices);
 
-    sceneObject = std::make_shared<SceneObject>(sphereTemplate);
-    scene->AddSceneObject(sceneObject);
+ //   for (decltype(totalVertices) i = 0; i < totalVertices; ++i) {
+ //       vertexColors->emplace_back(1.0f, 0, 0, 1.f);
+ //   }
+ //   sphereTemplate->SetVertexColors(std::move(vertexColors));
+
+ //   sceneObject = std::make_shared<SceneObject>(sphereTemplate);
+ //   scene->AddSceneObject(sceneObject);
+
+	// Add 2nd object to scene
+	std::vector<std::shared_ptr<RenderingObject>> meshTemplate = MeshLoader::LoadMesh(shader, "1f9jtr180dxk-Tree1ByTyroSmith/Tree1/Tree1.obj");
+	if (meshTemplate.empty()) {
+		std::cerr << "ERROR: Failed to load the model. Check your paths." << std::endl;
+		return;
+	}
+
+	sceneObject = std::make_shared<SceneObject>(meshTemplate);
+	scene->AddSceneObject(sceneObject);
 
     std::unique_ptr<LightProperties> lightProperties = make_unique<LightProperties>();
-    lightProperties->diffuseColor = glm::vec4(0.5f, 0.5f, 0.5f, 1.f);
+    lightProperties->diffuseColor = glm::vec4(0, 0.5f, 0.5f, 1.f);
 
     pointLight = std::make_shared<Light>(std::move(lightProperties));
-    pointLight->SetPosition(glm::vec3(0.f, 0.f, 10.f));
+    pointLight->SetPosition(glm::vec3(10.f, 10.f, 20.f));
     scene->AddLight(pointLight);
 }
 
@@ -163,7 +175,7 @@ void Assignment3::SetupExample2()
     shader->SetDiffuse(glm::vec4(0.8f, 0.8f, 0.8f, 1.f));
     shader->SetAmbient(glm::vec4(0.5f));
 
-    std::vector<std::shared_ptr<RenderingObject>> meshTemplate = MeshLoader::LoadMesh(shader, "outlander/Model/Outlander_Model.obj");
+    std::vector<std::shared_ptr<RenderingObject>> meshTemplate = MeshLoader::LoadMesh(shader, "maya-house.obj");
     if (meshTemplate.empty()) {
         std::cerr << "ERROR: Failed to load the model. Check your paths." << std::endl;
         return;
@@ -182,4 +194,5 @@ void Assignment3::SetupExample2()
 
 void Assignment3::Tick(double deltaTime)
 {
+
 }

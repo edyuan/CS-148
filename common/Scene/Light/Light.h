@@ -64,8 +64,8 @@ public:
      *  For a point light, the only thing that is necessary is the light's position.
      */ 
     virtual void SetupShaderUniforms(const class ShaderProgram* program) const;
+	std::string LIGHT_UNIFORM_NAME;
 private:
-    static const std::string LIGHT_UNIFORM_NAME;
     std::unique_ptr<struct LightProperties> properties;
 
     LightType lightType;
